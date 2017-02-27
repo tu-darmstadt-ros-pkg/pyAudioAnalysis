@@ -15,7 +15,9 @@ setup_args = generate_distutils_setup(
     install_requires=[
         "hmmlearn",
         "simplejson",
-        "eyed3"
+        "eyed3",
+        "alsaaudio",
+        "audioop"
     ]
 )
 
