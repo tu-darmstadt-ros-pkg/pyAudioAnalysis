@@ -121,14 +121,10 @@ def classifyFolderWrapper(inputFolder, modelType, modelName, outputMode=False):
     if not os.path.isfile(modelName):
         raise Exception("Input modelName not found!")
 
-    files = "*.wav"
-    if os.path.isdir(inputFolder):
-        strFilePattern = os.path.join(inputFolder, files)
-    else:
-        strFilePattern = inputFolder + files
-
+    types = ('*.wav', '*.aif',  '*.aiff', '*.mp3')
     wavFilesList = []
-    wavFilesList.extend(glob.glob(strFilePattern))
+    for files in types:
+        wavFilesList.extend(glob.glob(os.path.join(inputFolder, files)))
     wavFilesList = sorted(wavFilesList)
     if len(wavFilesList) == 0:
         print "No WAV files found!"
@@ -198,8 +194,12 @@ def segmentclassifyFileWrapper(inputWavFile, modelName, modelType):
     if not os.path.isfile(modelName):
         raise Exception("Input modelName not found!")
     if not os.path.isfile(inputWavFile):
-        raise Exception("Input audio file not found!")
-    gtFile = inputWavFile.replace(".wav", ".segments")
+        raise Exception("Input audio file not found!")    
+    gtFile = ""
+    if inputWavFile[-4::]==".wav":
+        gtFile = inputWavFile.replace(".wav", ".segments")
+    if inputWavFile[-4::]==".mp3":
+        gtFile = inputWavFile.replace(".mp3", ".segments")    
     aS.mtFileClassification(inputWavFile, modelName, modelType, True, gtFile)
 
 
@@ -328,7 +328,7 @@ def parse_arguments():
 
     trainClass = tasks.add_parser("trainClassifier", help="Train an SVM or KNN classifier")
     trainClass.add_argument("-i", "--input", nargs="+", required=True, help="Input directories")
-    trainClass.add_argument("--method", choices=["svm", "knn", "randomforest","gradientboosting","extratrees"], required=True, help="Classifier type")
+    trainClass.add_argument("--method", choices=["svm", "svm_rbf", "knn", "randomforest","gradientboosting","extratrees"], required=True, help="Classifier type")
     trainClass.add_argument("--beat", action="store_true", help="Compute beat features")
     trainClass.add_argument("-o", "--output", required=True, help="Generated classifier filename")
 
@@ -340,7 +340,7 @@ def parse_arguments():
 
     classFile = tasks.add_parser("classifyFile", help="Classify a file using an existing classifier")
     classFile.add_argument("-i", "--input", required=True, help="Input audio file")
-    classFile.add_argument("--model", choices=["svm", "knn", "randomforest","gradientboosting", "extratrees"], required=True, help="Classifier type (svm or knn or randomforest or gradientboosting or extratrees)") 
+    classFile.add_argument("--model", choices=["svm", "svm_rbf", "knn", "randomforest","gradientboosting", "extratrees"], required=True, help="Classifier type (svm or knn or randomforest or gradientboosting or extratrees)") 
     classFile.add_argument("--classifier", required=True, help="Classifier to use (path)")
 
     trainHMM = tasks.add_parser("trainHMMsegmenter_fromfile", help="Train an HMM from file + annotation data")
@@ -358,7 +358,7 @@ def parse_arguments():
 
     segmentClassifyFile = tasks.add_parser("segmentClassifyFile", help="Segmentation - classification of a WAV file given a trained SVM or kNN")
     segmentClassifyFile.add_argument("-i", "--input", required=True, help="Input audio file")
-    segmentClassifyFile.add_argument("--model", choices=["svm", "knn", "randomforest","gradientboosting","extratrees"], required=True, help="Model type")
+    segmentClassifyFile.add_argument("--model", choices=["svm", "svm_rbf", "knn", "randomforest","gradientboosting","extratrees"], required=True, help="Model type")
     segmentClassifyFile.add_argument("--modelName", required=True, help="Model path")
 
     segmentClassifyFileHMM = tasks.add_parser("segmentClassifyFileHMM", help="Segmentation - classification of a WAV file given a trained HMM")
@@ -378,7 +378,7 @@ def parse_arguments():
 
     classFolder = tasks.add_parser("classifyFolder")
     classFolder.add_argument("-i", "--input", required=True, help="Input folder")
-    classFolder.add_argument("--model", choices=["svm", "knn", "randomforest","gradientboosting","extratrees"], required=True, help="Classifier type")
+    classFolder.add_argument("--model", choices=["svm", "svm_rbf", "knn", "randomforest","gradientboosting","extratrees"], required=True, help="Classifier type")
     classFolder.add_argument("--classifier", required=True, help="Classifier to use (filename)")
     classFolder.add_argument("--details", action="store_true", help="Plot details (otherwise only counts per class are shown)")
 

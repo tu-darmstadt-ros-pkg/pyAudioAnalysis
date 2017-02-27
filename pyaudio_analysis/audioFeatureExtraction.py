@@ -555,8 +555,8 @@ def stFeatureExtraction(signal, Fs, Win, Step):
     numOfChromaFeatures = 13
     totalNumOfFeatures = numOfTimeSpectralFeatures + nceps + numOfHarmonicFeatures + numOfChromaFeatures
 #    totalNumOfFeatures = numOfTimeSpectralFeatures + nceps + numOfHarmonicFeatures
-    stFeatures = numpy.array([], dtype=numpy.float64)
 
+    stFeatures = []
     while (curPos + Win - 1 < N):                        # for each short-term window until the end of signal
         countFrames += 1
         x = signal[curPos:curPos+Win]                    # get current window
@@ -592,13 +592,11 @@ def stFeatureExtraction(signal, Fs, Win, Step):
 #            print numpy.nonzero(chromaF > 5*chromaF.mean())[0].shape[0]
         #HR, curFV[numOfTimeSpectralFeatures+nceps] = stHarmonic(x, Fs)
         # curFV[numOfTimeSpectralFeatures+nceps+1] = freq_from_autocorr(x, Fs)
-        if countFrames == 1:
-            stFeatures = curFV                                        # initialize feature matrix (if first frame)
-        else:
-            stFeatures = numpy.concatenate((stFeatures, curFV), 1)    # update feature matrix
+        stFeatures.append(curFV)
         Xprev = X.copy()
 
-    return numpy.array(stFeatures)
+    stFeatures = numpy.concatenate(stFeatures, 1)
+    return stFeatures
 
 
 def mtFeatureExtraction(signal, Fs, mtWin, mtStep, stWin, stStep):
@@ -723,17 +721,24 @@ def dirWavFeatureExtraction(dirName, mtWin, mtStep, stWin, stStep, computeBEAT=F
     allMtFeatures = numpy.array([])
     processingTimes = []
 
-    types = ('*.wav', '*.aif',  '*.aiff')
+    types = ('*.wav', '*.aif',  '*.aiff', '*.mp3')
     wavFilesList = []
     for files in types:
         wavFilesList.extend(glob.glob(os.path.join(dirName, files)))
 
-    wavFilesList = sorted(wavFilesList)
+    wavFilesList = sorted(wavFilesList)    
 
-    for wavFile in wavFilesList:
-        [Fs, x] = audioBasicIO.readAudioFile(wavFile)            # read file
-        t1 = time.clock()
-        x = audioBasicIO.stereo2mono(x)                          # convert stereo to mono
+    for i, wavFile in enumerate(wavFilesList):        
+        print "Analyzing file {0:d} of {1:d}: {2:s}".format(i+1, len(wavFilesList), wavFile.encode('utf-8'))
+        if os.stat(wavFile).st_size == 0:
+            print "   (EMPTY FILE -- SKIPPING)"
+            continue        
+        [Fs, x] = audioBasicIO.readAudioFile(wavFile)            # read file                
+        t1 = time.clock()        
+        x = audioBasicIO.stereo2mono(x)                          # convert stereo to mono                
+        if x.shape[0]<float(Fs)/10:
+            print "  (AUDIO FILE TOO SMALL - SKIPPING)"
+            continue
         if computeBEAT:                                          # mid-term feature extraction for current file
             [MidTermFeatures, stFeatures] = mtFeatureExtraction(x, Fs, round(mtWin * Fs), round(mtStep * Fs), round(Fs * stWin), round(Fs * stStep))
             [beat, beatConf] = beatExtraction(stFeatures, stStep)
