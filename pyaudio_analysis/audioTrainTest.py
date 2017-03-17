@@ -308,7 +308,7 @@ def featureAndTrain(listOfDirs, mtWin, mtStep, stWin, stStep, classifierType, mo
     elif classifierType == "randomforest":
         classifierParams = numpy.array([10, 25, 50, 100, 200, 500])
     elif classifierType == "knn":
-        classifierParams = numpy.array([3, 5, 7, 9, 11, 13, 15])
+        classifierParams = numpy.array([1, 3, 5, 7, 9, 11, 13, 15])
         # classifierParams = numpy.array([1, 3, 5, 7, 9, 11, 13, 15])
     elif classifierType == "gradientboosting":
         classifierParams = numpy.array([10, 25, 50, 100, 200, 500])
